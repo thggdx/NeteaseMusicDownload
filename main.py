@@ -89,7 +89,7 @@ try:
         
         while data:
             for i in data:
-                print(i['name']+"下载失败")
+                print(i['name']+"下载失败;"+i['info'])
             print("是否重试?")
             if not input("Y/n:").lower()=="n":
                 songlist=[]

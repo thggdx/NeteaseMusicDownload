@@ -5,7 +5,7 @@ from qrcode import QRCode as qr1
 from time import time as ti
 from hashlib import md5
 from tqdm import tqdm
-from mutagen import flac as mutagen_flac,id3 as mutagen_id3,wavpack as mutagen_wavpack
+from mutagen import flac as mutagen_flac,id3 as mutagen_id3,wave as mutagen_wave
 
 cookie=""
 COOKIE_FILE = ospath.dirname(ospath.abspath(__file__))+'/cookie.dat'
@@ -62,7 +62,6 @@ def qrcodeKeyGet(api:str):
     data=requests.get(url).json()
     if(data['code']==200):
         key=data['data']['unikey']
-        print(key)
         return key
     else:
         raise Exception("二维码获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
@@ -207,7 +206,6 @@ def getSongUrl(songlist:list,api:str):
 #下载歌曲
 def downloadSong(songUrl:list,savePath:str,numThreads:int=1,showProgress:bool=True):
     def download(i,semaphore):
-        print(i)
         if i['url'] == None:
             failed.append({'name':i['name'],'id':i['id']})
             semaphore.release()
@@ -232,7 +230,7 @@ def downloadSong(songUrl:list,savePath:str,numThreads:int=1,showProgress:bool=Tr
             if "songTag" in i:
                 setSongTag(filePath,i['songTag'])
         except Exception as e:
-            failed.append({'name':i['name'],'id':i['id']})
+            failed.append({'name':i['name'],'id':i['id'],'info':str(e)})
         semaphore.release()
 
     failed = []
@@ -254,16 +252,17 @@ def downloadSong(songUrl:list,savePath:str,numThreads:int=1,showProgress:bool=Tr
 
 #设置歌曲标签
 def setSongTag(filePath:str,songTag:dict):
-    print(songTag)
     filetype = ospath.splitext(filePath)[1].lower()
-    arist=[]
+    title = songTag['title']
+    album = songTag['album']
+    arist = []
+    for i in songTag['artist']:
+        arist.append(i['name'])
     if filetype == '.flac':
-        for i in songTag['artist']:
-            arist.append(i['name'])
         audiofile = mutagen_flac.FLAC(filePath)
-        audiofile['title'] = songTag['title']
+        audiofile['title'] = title
         audiofile['artist'] = arist
-        audiofile['album'] = songTag['album']
+        audiofile['album'] = album
         if (('picture' in songTag)and(songTag['picture'] != None)):
             response = requests.get(songTag['picture'])
             picture = mutagen_flac.Picture()
@@ -274,11 +273,26 @@ def setSongTag(filePath:str,songTag:dict):
             audiofile.clear_pictures()
             audiofile.add_picture(picture)
     elif filetype == '.mp3':#TODO
+        audiofile = mutagen_id3.ID3(filePath)
+        if 'TIT2' in audiofile:
+            audiofile['TIT2'].text = title
+        else:
+            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title))
+        if 'TPE1' in audiofile:
+            audiofile['TPE1'].text = arist
+        else:
+            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist))
+        if 'TALB' in audiofile:
+            audiofile['TALB'].text = album
+        else:
+            audiofile.add(mutagen_id3.TALB(encoding=3, text=album))
+        if (('picture' in songTag)and(songTag['picture'] != None)):
+            response = requests.get(songTag['picture'])
+            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content)
+            audiofile.delall('APIC')
+            audiofile.add(picture)
+    elif filetype == '.wav':#TODO
         return True
-        # audiofile = mutagen_id3.ID3(filePath)
-        # audiofile['TALB'].text = songTag['album']
-        # audiofile['TIT2'].text = songTag['title']
-        # audiofile['TPE1'].text = songTag['artist']
     else:
         raise Exception("歌曲标签设置模块[Err]:不支持的文件类型")
     audiofile.save()
