@@ -1,20 +1,20 @@
 import requests
 import threading
 from os import path as ospath,makedirs
-from qrcode import QRCode as qr1
-from time import time as ti
+from qrcode import QRCode as qr
+from time import time
 from hashlib import md5
 from tqdm import tqdm
-from mutagen import flac as mutagen_flac,id3 as mutagen_id3,wave as mutagen_wave
+from mutagen import flac as mutagen_flac,id3 as mutagen_id3
 
 cookie=""
-COOKIE_FILE = ospath.dirname(ospath.abspath(__file__))+'/cookie.dat'
+COOKIE_FILE = ospath.dirname(ospath.abspath(__file__))+'/.NeteaseMusic_Cookie'
 if 'temp' in COOKIE_FILE.lower():
-    COOKIE_FILE = ospath.expanduser('~')+'/cookie.dat'
+    COOKIE_FILE = ospath.expanduser('~')+'/.NeteaseMusic_Cookie'
 
 #获取时间戳
-def time():
-    return str(int(ti()))
+def timestamp():
+    return str(int(time()))
 
 #cookie保存和读取
 def cookieSave(intput:str=""):
@@ -58,7 +58,7 @@ def apiCheck(api:str):
 
 #二维码key获取
 def qrcodeKeyGet(api:str):
-    url=api+'/login/qr/key?timestamp='+time()
+    url=api+'/login/qr/key?timestamp='+timestamp()
     data=requests.get(url).json()
     if(data['code']==200):
         key=data['data']['unikey']
@@ -68,14 +68,13 @@ def qrcodeKeyGet(api:str):
 
 #二维码生成
 def qrcodeGet(key:str,api:str):
-    url=api+'/login/qr/create?timestamp='+time()
+    url=api+'/login/qr/create?timestamp='+timestamp()
     data={'key':key}
     data=requests.post(url,data=data).json()
     if(data['code']==200):
         print(data['data']['qrurl'])
-        qr=qr1()
-        qr.add_data(data['data']['qrurl'])
-        qr.print_ascii(invert=True)
+        qr().add_data(data['data']['qrurl'])
+        qr().print_ascii(invert=True)
         return True
     else:
         raise Exception("二维码生成模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
@@ -84,7 +83,7 @@ def qrcodeGet(key:str,api:str):
 def qrcodeCheck(key:str,api:str):
     url=api+'/login/qr/check'
     data1={'key':key}
-    data=requests.post(url+'?timestamp='+time(),data=data1).json()
+    data=requests.post(url+'?timestamp='+timestamp(),data=data1).json()
     code=data['code']
     if(code==800):
         raise Exception("二维码状态查询模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
@@ -100,7 +99,7 @@ def qrcodeCheck(key:str,api:str):
 
 #验证码获取
 def captchaSent(phone:int,ctcode:int,api:str):
-    url=api+'/captcha/sent?timestamp='+time()
+    url=api+'/captcha/sent?timestamp='+timestamp()
     data={
         'phone':str(phone),
         'ctcode':str(ctcode)
@@ -113,7 +112,7 @@ def captchaSent(phone:int,ctcode:int,api:str):
 
 #验证码验证
 def captchaCheck(phone:int,captcha:int,ctcode:int,api:str):
-    url=api+'/captcha/verify?timestamp='+time()
+    url=api+'/captcha/verify?timestamp='+timestamp()
     data={
         'phone':str(phone),
         'captcha':str(captcha),
@@ -129,7 +128,7 @@ def captchaCheck(phone:int,captcha:int,ctcode:int,api:str):
 
 #验证码登录
 def captchaLogin(phone:int,captcha:int,ctcode:int,api:str):
-    url=api+'/login/cellphone?timestamp='+time()
+    url=api+'/login/cellphone?timestamp='+timestamp()
     data={
         'phone':str(phone),
         'captcha':str(captcha),
@@ -144,7 +143,7 @@ def captchaLogin(phone:int,captcha:int,ctcode:int,api:str):
 
 #密码登录
 def passwordLogin(phone:int,password:str,ctcode:int,api:str):
-    url=api+'/login/cellphone?timestamp='+time()
+    url=api+'/login/cellphone?timestamp='+timestamp()
     data={
         'phone':str(phone),
         'md5_password':md5(password.encode('utf-8')).hexdigest(),
@@ -159,7 +158,7 @@ def passwordLogin(phone:int,password:str,ctcode:int,api:str):
 
 #获取歌单
 def getPlaylist(id:int,api:str):
-    url=api+'/playlist/detail?timestamp='+time()
+    url=api+'/playlist/detail?timestamp='+timestamp()
     data={
         'id':str(id),
         'cookie':cookie
@@ -175,7 +174,7 @@ def getSongInfo(songlist:list,api:str):
     ids = ""
     for i in songlist:
         ids = ids+str(i)+","
-    url=api+'/song/detail?timestamp='+time()
+    url=api+'/song/detail?timestamp='+timestamp()
     data={
         'ids':ids.rstrip(','),
         'cookie':cookie
@@ -191,7 +190,7 @@ def getSongUrl(songlist:list,api:str):
     id = ""
     for i in songlist:
         id = id+str(i)+","
-    url=api+'/song/url/v1?timestamp='+time()
+    url=api+'/song/url/v1?timestamp='+timestamp()
     data={
         'id':id.rstrip(','),
         'cookie':cookie,
@@ -227,8 +226,11 @@ def downloadSong(songUrl:list,savePath:str,numThreads:int=1,showProgress:bool=Tr
                         pbar.close() 
                     else:
                         file.write(response.content)
-            if "songTag" in i:
-                setSongTag(filePath,i['songTag'])
+            try:
+                if "songTag" in i:
+                    setSongTag(filePath,i['songTag'])
+            except Exception as e:
+                print("歌曲标签设置失败: "+str(e))
         except Exception as e:
             failed.append({'name':i['name'],'id':i['id'],'info':str(e)})
         semaphore.release()
@@ -277,22 +279,20 @@ def setSongTag(filePath:str,songTag:dict):
         if 'TIT2' in audiofile:
             audiofile['TIT2'].text = title
         else:
-            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title))
+            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title)) # type: ignore
         if 'TPE1' in audiofile:
             audiofile['TPE1'].text = arist
         else:
-            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist))
+            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist)) # type: ignore
         if 'TALB' in audiofile:
             audiofile['TALB'].text = album
         else:
-            audiofile.add(mutagen_id3.TALB(encoding=3, text=album))
+            audiofile.add(mutagen_id3.TALB(encoding=3, text=album)) # type: ignore
         if (('picture' in songTag)and(songTag['picture'] != None)):
             response = requests.get(songTag['picture'])
-            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content)
+            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content) # type: ignore
             audiofile.delall('APIC')
             audiofile.add(picture)
-    elif filetype == '.wav':#TODO
-        return True
     else:
         raise Exception("歌曲标签设置模块[Err]:不支持的文件类型")
     audiofile.save()
