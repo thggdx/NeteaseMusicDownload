@@ -1,6 +1,5 @@
 import requests
-import threading
-from os import path as ospath,makedirs
+from os import path as ospath
 from qrcode import QRCode as qr
 from time import time
 from hashlib import md5
@@ -13,11 +12,11 @@ if 'temp' in COOKIE_FILE.lower():
     COOKIE_FILE = ospath.expanduser('~')+'/.NeteaseMusic_Cookie'
 
 #获取时间戳
-def timestamp():
+def timestamp() -> str:
     return str(int(time()))
 
 #cookie保存和读取
-def cookieSave(intput:str=""):
+def cookieSave(intput:str="") -> bool:
     global cookie
     with open(COOKIE_FILE, 'a+') as f:
         f.seek(0)
@@ -34,7 +33,7 @@ def cookieSave(intput:str=""):
                 return False
 
 #符号转换
-def to_full_width(text):
+def to_full_width(text) -> str:
     full_width_symbols = ''
     for char in text:
         if char in r'\/:*?"<>|':
@@ -45,7 +44,7 @@ def to_full_width(text):
     return full_width_symbols
 
 #API检查
-def apiCheck(api:str):
+def apiCheck(api:str) -> bool:
     url=api+'/search?keywords=海阔天空'
     try:
         data=requests.get(url).json()
@@ -57,7 +56,7 @@ def apiCheck(api:str):
         raise Exception("API检查模块[Err]:API无效")
 
 #二维码key获取
-def qrcodeKeyGet(api:str):
+def qrcodeKeyGet(api:str) -> str:
     url=api+'/login/qr/key?timestamp='+timestamp()
     data=requests.get(url).json()
     if(data['code']==200):
@@ -67,7 +66,7 @@ def qrcodeKeyGet(api:str):
         raise Exception("二维码获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #二维码生成
-def qrcodeGet(key:str,api:str):
+def qrcodeGet(key:str,api:str) -> bool:
     url=api+'/login/qr/create?timestamp='+timestamp()
     data={'key':key}
     data=requests.post(url,data=data).json()
@@ -80,7 +79,7 @@ def qrcodeGet(key:str,api:str):
         raise Exception("二维码生成模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #二维码状态查询
-def qrcodeCheck(key:str,api:str):
+def qrcodeCheck(key:str,api:str) -> dict:
     url=api+'/login/qr/check'
     data1={'key':key}
     data=requests.post(url+'?timestamp='+timestamp(),data=data1).json()
@@ -98,7 +97,7 @@ def qrcodeCheck(key:str,api:str):
         raise Exception("二维码状态查询模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #验证码获取
-def captchaSent(phone:int,ctcode:int,api:str):
+def captchaSent(phone:int,ctcode:int,api:str) -> bool:
     url=api+'/captcha/sent?timestamp='+timestamp()
     data={
         'phone':str(phone),
@@ -111,7 +110,7 @@ def captchaSent(phone:int,ctcode:int,api:str):
         raise Exception("验证码发送模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #验证码验证
-def captchaCheck(phone:int,captcha:int,ctcode:int,api:str):
+def captchaCheck(phone:int,captcha:int,ctcode:int,api:str) -> bool:
     url=api+'/captcha/verify?timestamp='+timestamp()
     data={
         'phone':str(phone),
@@ -127,7 +126,7 @@ def captchaCheck(phone:int,captcha:int,ctcode:int,api:str):
         raise Exception("验证码验证模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #验证码登录
-def captchaLogin(phone:int,captcha:int,ctcode:int,api:str):
+def captchaLogin(phone:int,captcha:int,ctcode:int,api:str) -> dict:
     url=api+'/login/cellphone?timestamp='+timestamp()
     data={
         'phone':str(phone),
@@ -142,7 +141,7 @@ def captchaLogin(phone:int,captcha:int,ctcode:int,api:str):
         raise Exception("验证码登录模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #密码登录
-def passwordLogin(phone:int,password:str,ctcode:int,api:str):
+def passwordLogin(phone:int,password:str,ctcode:int,api:str) -> dict:
     url=api+'/login/cellphone?timestamp='+timestamp()
     data={
         'phone':str(phone),
@@ -157,7 +156,7 @@ def passwordLogin(phone:int,password:str,ctcode:int,api:str):
         raise Exception("密码登录模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #获取歌单
-def getPlaylist(id:int,api:str):
+def getPlaylist(id:int,api:str) -> dict:
     url=api+'/playlist/detail?timestamp='+timestamp()
     data={
         'id':str(id),
@@ -170,7 +169,7 @@ def getPlaylist(id:int,api:str):
         raise Exception("歌单获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #获取歌曲信息
-def getSongInfo(songlist:list,api:str):
+def getSongInfo(songlist:list,api:str) -> dict:
     ids = ""
     for i in songlist:
         ids = ids+str(i)+","
@@ -185,8 +184,17 @@ def getSongInfo(songlist:list,api:str):
     else:
         raise Exception("歌曲信息获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
+#获取歌词
+def getLyric(id:int,api:str) -> dict:
+    url=api+'/lyric?id='+str(id)
+    data=requests.get(url).json()
+    if(data['code']==200):
+        return data
+    else:
+        raise Exception("歌词获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
+
 #获取歌曲url
-def getSongUrl(songlist:list,api:str):
+def getSongUrl(songlist:list,api:str) -> dict:
     id = ""
     for i in songlist:
         id = id+str(i)+","
@@ -202,58 +210,8 @@ def getSongUrl(songlist:list,api:str):
     else:
         raise Exception("歌曲url获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
-#下载歌曲
-def downloadSong(songUrl:list,savePath:str,numThreads:int=1,showProgress:bool=True):
-    def download(i,semaphore):
-        if i['url'] == None:
-            failed.append({'name':i['name'],'id':i['id']})
-            semaphore.release()
-            return
-        try:
-            print("Downloading: " + i['name'] + "." +  i['type'])
-            filePath = (savePath + to_full_width(i['name']) + "." + i['type'])
-            with open(filePath, "wb") as file:
-                response = requests.get(i['url'], stream=True)
-                total_length = int(response.headers.get('content-length', 0))
-                if total_length is None:
-                    file.write(response.content)
-                else:
-                    if showProgress:
-                        pbar=tqdm(total=total_length,unit='B',unit_scale=True)
-                        for data in response.iter_content(chunk_size=4096):
-                            file.write(data)
-                            pbar.update(len(data))
-                        pbar.close() 
-                    else:
-                        file.write(response.content)
-            try:
-                if "songTag" in i:
-                    setSongTag(filePath,i['songTag'])
-            except Exception as e:
-                print("歌曲标签设置失败: "+str(e))
-        except Exception as e:
-            failed.append({'name':i['name'],'id':i['id'],'info':str(e)})
-        semaphore.release()
-
-    failed = []
-
-    if not ospath.exists(savePath):
-        makedirs(savePath)
-    semaphore = threading.Semaphore(numThreads)
-    threads = []
-    for i in songUrl:
-        semaphore.acquire()
-        t = threading.Thread(target=download, args=(i, semaphore))
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
-
-    return failed
-
 #设置歌曲标签
-def setSongTag(filePath:str,songTag:dict):
+def setSongTag(filePath:str,songTag:dict) -> bool:
     filetype = ospath.splitext(filePath)[1].lower()
     title = songTag['title']
     album = songTag['album']
@@ -265,6 +223,8 @@ def setSongTag(filePath:str,songTag:dict):
         audiofile['title'] = title
         audiofile['artist'] = arist
         audiofile['album'] = album
+        if (('lyric' in songTag)and(songTag['lyric'] != None)):
+                audiofile['lyrics'] = songTag['lyric']
         if (('picture' in songTag)and(songTag['picture'] != None)):
             response = requests.get(songTag['picture'])
             picture = mutagen_flac.Picture()
@@ -274,27 +234,50 @@ def setSongTag(filePath:str,songTag:dict):
             picture.data = response.content
             audiofile.clear_pictures()
             audiofile.add_picture(picture)
-    elif filetype == '.mp3':#TODO
+    elif filetype == '.mp3':
         audiofile = mutagen_id3.ID3(filePath)
         if 'TIT2' in audiofile:
             audiofile['TIT2'].text = title
         else:
-            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title)) # type: ignore
+            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title))
         if 'TPE1' in audiofile:
             audiofile['TPE1'].text = arist
         else:
-            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist)) # type: ignore
+            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist))
         if 'TALB' in audiofile:
             audiofile['TALB'].text = album
         else:
-            audiofile.add(mutagen_id3.TALB(encoding=3, text=album)) # type: ignore
+            audiofile.add(mutagen_id3.TALB(encoding=3, text=album))
+        if (('lyric' in songTag)and(songTag['lyric'] != None)):
+                audiofile['USLT'] = mutagen_id3.USLT(encoding=3, text=songTag['lyric'])
         if (('picture' in songTag)and(songTag['picture'] != None)):
             response = requests.get(songTag['picture'])
-            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content) # type: ignore
+            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content)
             audiofile.delall('APIC')
             audiofile.add(picture)
     else:
         raise Exception("歌曲标签设置模块[Err]:不支持的文件类型")
     audiofile.save()
     return True
-    
+
+class songFile:#TODO
+    def __init__(self, filePath:str, id:int = None, url:str = None, songTag:dict = None) -> None:
+        self.filePath = filePath
+        self.id = id
+        self.url = url
+        self.songTag = songTag
+        self.fileName = ospath.splitext(filePath)[0].split('\\')[-1].split('/')[-1]
+        self.fileType = ospath.splitext(filePath)[1].lstrip('.').lower()
+
+    def download(self) -> bool:
+        if self.url:
+            with open(self.filePath, "wb") as file:
+                response = requests.get(self.url, stream=True)
+                file.write(response.content)
+            return True
+        return False
+
+    def setTag(self) -> bool:
+        if self.songTag:
+            return setSongTag(self.filePath,self.songTag)
+        return False

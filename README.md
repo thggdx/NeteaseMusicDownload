@@ -1,4 +1,4 @@
-# NeteaseMusicDownload(未完成)
+# NeteaseMusicDownload
 
 **一个用于批量下载网易云音乐歌单中歌曲的py脚本**
 
