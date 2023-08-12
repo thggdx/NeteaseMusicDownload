@@ -3,7 +3,6 @@ from os import path as ospath
 from qrcode import QRCode as qr
 from time import time
 from hashlib import md5
-from tqdm import tqdm
 from mutagen import flac as mutagen_flac,id3 as mutagen_id3
 
 cookie=""

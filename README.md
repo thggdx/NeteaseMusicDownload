@@ -15,7 +15,7 @@ python ./main.py
 ```
 qrcode
 requests
-tqdm
 mutagen
+rich
 ```
 脚本功能还在完善,欢迎各位大佬指出错误和pr
