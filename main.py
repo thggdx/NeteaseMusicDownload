@@ -16,17 +16,17 @@ faile=[]
 def task(songFile,semaphore):
     global faile
     try:
-        songFile.download()
-        if lyricType != "n":
-            lyric=API.getLyric(songFile.id,api)
-            if lyric and('lrc' in lyric): 
-                lyric=lyric['lrc']['lyric']
-                if lyricType=="1":
-                    with open(ospath.splitext(songFile.filePath)[0]+'.lrc','w',encoding='utf-8') as f:
-                        f.write(lyric)
-                elif lyricType=="2":
-                    songFile.songTag['lyric']=lyric
-        songFile.setTag()
+        if songFile.download():
+            if lyricType != "n":
+                lyric=API.getLyric(songFile.id,api)
+                if lyric and('lrc' in lyric): 
+                    lyric=lyric['lrc']['lyric']
+                    if lyricType=="1":
+                        with open(ospath.splitext(songFile.filePath)[0]+'.lrc','w',encoding='utf-8') as f:
+                            f.write(lyric)
+                    elif lyricType=="2":
+                        songFile.songTag['lyric']=lyric
+            songFile.setTag()
     except Exception as e:
         faile.append({"id":songFile.id,"Exception":e})
     finally:
@@ -99,8 +99,8 @@ def main():
             id_name[i['id']]=i['name']
         print("歌单歌曲数量:"+str(len(songlist)))
 
-        savePath=input("请输入保存路径(默认路径: "+(getcwd()+'\\songs\\')+"):")
-        savePath=savePath if savePath else (getcwd()+'\\songs\\')
+        savePath=input("请输入保存路径(默认路径: "+(getcwd()+'/songs/')+"):")
+        savePath=savePath if savePath else (getcwd()+'/songs/')
         makedirs(savePath) if not ospath.exists(savePath) else None
         lyricType=input("是否下载歌词(Y/n):").lower()
         if lyricType != "n":
@@ -122,7 +122,7 @@ def main():
 
         songFile_list=[]
         for i in songUrl['data']:
-            songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']}))
+            songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']+"?param=3000y3000"}))
 
         threads=[]
         semaphore=threading.Semaphore(numThreads)
@@ -139,7 +139,7 @@ def main():
 
         while faile:#TODO
             for i in faile:
-                print(id_name[i['id']]+"下载失败;"+str(i['Exception']))
+                print(id_name[i['id']]+" 下载失败;"+str(i['Exception']))
             if not input("是否重试(Y/n):").lower()=="n":
                 songlist=[]
                 songFile_list=[]
@@ -148,7 +148,7 @@ def main():
                 faile=[]
                 songUrl=API.getSongUrl(songlist,api)
                 for i in songUrl['data']:
-                    songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']}))
+                    songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']+"?param=3000y3000"}))
             else:
                 break
         print("下载完成")
