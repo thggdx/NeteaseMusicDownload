@@ -3,3 +3,12 @@ __pycache__/
 json/
 songs/
 demo/
+logs/
+*demo*
+*.json
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.lrc
+*.log
