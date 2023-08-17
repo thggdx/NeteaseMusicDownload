@@ -5,28 +5,25 @@ from time import time
 from hashlib import md5
 from mutagen import flac as mutagen_flac,id3 as mutagen_id3
 
-cookie=""
-COOKIE_FILE = ospath.dirname(ospath.abspath(__file__))+'/.NeteaseMusic_Cookie'
-if 'temp' in COOKIE_FILE.lower():
-    COOKIE_FILE = ospath.expanduser('~')+'/.NeteaseMusic_Cookie'
+COOKIE=""
 
 #获取时间戳
 def timestamp() -> str:
     return str(int(time()))
 
 #cookie保存和读取
-def cookieSave(intput:str="") -> bool:
-    global cookie
+def cookieSave(COOKIE_FILE:str, intput:str="") -> bool:
+    global COOKIE
     with open(COOKIE_FILE, 'a+') as f:
         f.seek(0)
         if intput:
             f.truncate()
             f.write(intput)
-            cookie = intput
+            COOKIE = intput
             return True
         else:
-            cookie = f.read().strip()
-            if cookie:
+            COOKIE = f.read().strip()
+            if COOKIE:
                 return True
             else:
                 return False
@@ -49,10 +46,9 @@ def apiCheck(api:str) -> bool:
         data=requests.get(url).json()
         if(data['code']==200 and data['result']['songs'][0]['name'] == "海阔天空"):
             return True
-        else:
-            raise Exception("API检查模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
     except:
-        raise Exception("API检查模块[Err]:API无效")
+        return False
+        
 
 #二维码key获取
 def qrcodeKeyGet(api:str) -> str:
@@ -80,18 +76,10 @@ def qrcodeGet(key:str,api:str) -> bool:
 #二维码状态查询
 def qrcodeCheck(key:str,api:str) -> dict:
     url=api+'/login/qr/check'
-    data1={'key':key}
-    data=requests.post(url+'?timestamp='+timestamp(),data=data1).json()
-    code=data['code']
-    if(code==800):
-        raise Exception("二维码状态查询模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
-    elif(code==801):
-        return {'code':801,'status':'等待扫码'}
-    elif(code==802):
-        return {'code':802,'name':data['nickname'],'status':'等待确认'}
-    elif(code==803):
-        cookieSave(data['cookie'])
-        return {'code':803,'status':'登录成功'}
+    data={'key':key}
+    data=requests.post(url+'?timestamp='+timestamp(),data=data).json()
+    if(data['code'] in [801,802,803]):
+        return data
     else:
         raise Exception("二维码状态查询模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
@@ -134,8 +122,7 @@ def captchaLogin(phone:int,captcha:int,ctcode:int,api:str) -> dict:
     }
     data=requests.post(url,data=data).json()
     if(data['code']==200):
-        cookieSave(data['cookie'])
-        return {'name':data['profile']['nickname'],'id':data['profile']['userId'],'token':data['token']}
+        return data
     else:
         raise Exception("验证码登录模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
@@ -149,8 +136,7 @@ def passwordLogin(phone:int,password:str,ctcode:int,api:str) -> dict:
     }
     data=requests.post(url,data=data).json()
     if(data['code']==200):
-        cookieSave(data['cookie'])
-        return {'name':data['profile']['nickname'],'id':data['profile']['userId'],'token':data['token']}
+        return data
     else:
         raise Exception("密码登录模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
@@ -159,7 +145,7 @@ def getPlaylist(id:int,api:str) -> dict:
     url=api+'/playlist/detail?timestamp='+timestamp()
     data={
         'id':str(id),
-        'cookie':cookie
+        'cookie':COOKIE
     }
     data=requests.post(url,data=data).json()
     if(data['code']==200):
@@ -175,7 +161,7 @@ def getSongInfo(songlist:list,api:str) -> dict:
     url=api+'/song/detail?timestamp='+timestamp()
     data={
         'ids':ids.rstrip(','),
-        'cookie':cookie
+        'cookie':COOKIE
     }
     data=requests.post(url,data=data).json()
     if(data['code']==200):
@@ -200,7 +186,7 @@ def getSongUrl(songlist:list,api:str) -> dict:
     url=api+'/song/url/v1?timestamp='+timestamp()
     data={
         'id':id.rstrip(','),
-        'cookie':cookie,
+        'cookie':COOKIE,
         'level':'jymaster'
     }
     data=requests.post(url,data=data).json()
