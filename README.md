@@ -11,6 +11,14 @@ cd NeteaseMusicDownload
 pip install -r requirements.txt
 python ./main.py
 ```
+## 功能/特性
+>* 手机号验证码登录
+>* 手机号密码登录
+>* 扫码登陆
+>* 登录后Cookie保存(记住登录状态)
+>* 多线程批量下载歌单中歌曲
+>* 歌曲标签设置(歌曲封面,名称,作者,专辑)
+>* 歌词下载(独立文件\歌曲内嵌)
 ## requirements
 ```
 qrcode
