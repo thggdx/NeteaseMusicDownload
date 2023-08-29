@@ -166,7 +166,10 @@ def main():
 
     songFile_list=[]
     for i in songUrl['data']:
-        songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']+"?param=3000y3000"}))
+        if not i['url']:
+            pass
+        else:
+            songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']+"?param=3000y3000"}))
 
     threads=[]
     semaphore=threading.Semaphore(numThreads)
@@ -203,4 +206,6 @@ try:
     main()
     logger.info("程序正常退出")
 except Exception as e:
-    raise(e)
+    logger.exception('An error occurred: %s', e)
+    logger.error("程序异常退出")
+    print(str(e))
