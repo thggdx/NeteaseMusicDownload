@@ -7,7 +7,7 @@ from getpass import getpass
 from rich.progress import Progress
 from json import load as jsonload,dump as jsondump
 
-DEBUG=True#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
+DEBUG=False#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
 
 progress=Progress()
 task_id=None
