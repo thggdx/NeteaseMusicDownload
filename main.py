@@ -6,7 +6,7 @@ from time import sleep,localtime,strftime
 from getpass import getpass
 from rich.progress import Progress
 
-DEBUG=False#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
+DEBUG=True#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
 
 progress=Progress()
 task_id=None
@@ -104,7 +104,7 @@ def main():
                 password=getpass("请输入密码:")
                 data=API.passwordLogin(phone,password,ctcode,api)
                 API.cookieSave(COOKIE_FILE, data['cookie'])
-                print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId']+"\n登录成功"))
+                print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId'])+"\n登录成功")
                 logger.info("登录成功")
             if loginType=="3":
                 logger.info("登陆方式: 手机验证码登陆")
@@ -115,7 +115,7 @@ def main():
                     if API.captchaCheck(phone,captcha,ctcode,api):
                         data=API.captchaLogin(phone,captcha,ctcode,api)
                         API.cookieSave(COOKIE_FILE, data['cookie'])
-                        print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId']+"\n登录成功"))
+                        print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId'])+"\n登录成功")
                         logger.info("登录成功")
                         break
                     else:
