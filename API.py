@@ -1,6 +1,6 @@
 import requests
 from os import path as ospath
-from qrcode import QRCode as qr
+from qrcode import QRCode as qrcode
 from time import time
 from hashlib import md5
 from mutagen import flac as mutagen_flac,id3 as mutagen_id3
@@ -67,8 +67,9 @@ def qrcodeGet(key:str,api:str) -> bool:
     data=requests.post(url,data=data).json()
     if(data['code']==200):
         print(data['data']['qrurl'])
-        qr().add_data(data['data']['qrurl'])
-        qr().print_ascii(invert=True)
+        qr=qrcode()
+        qr.add_data(data['data']['qrurl'])
+        qr.print_ascii(invert=True)
         return True
     else:
         raise Exception("二维码生成模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
