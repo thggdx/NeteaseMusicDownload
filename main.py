@@ -5,6 +5,7 @@ from os import getcwd,makedirs,path as ospath
 from time import sleep,localtime,strftime
 from getpass import getpass
 from rich.progress import Progress
+from json import load as jsonload,dump as jsondump
 
 DEBUG=False#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
 
@@ -29,6 +30,7 @@ def task(songFile,semaphore):
     global faile
     try:
         if songFile.download():
+            PathData['songs'].append(songFile.id)
             if lyricType != "n":
                 lyric=API.getLyric(songFile.id,api)
                 if lyric and('lrc' in lyric): 
@@ -51,6 +53,7 @@ def main():
     global progress
     global task_id
     global faile
+    global PathData
     
     print("当前工作路径: "+getcwd())
     logger.info("当前工作路径: "+getcwd())
@@ -104,7 +107,7 @@ def main():
                 password=getpass("请输入密码:")
                 data=API.passwordLogin(phone,password,ctcode,api)
                 API.cookieSave(COOKIE_FILE, data['cookie'])
-                print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId']+"\n登录成功"))
+                print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId'])+"\n登录成功")
                 logger.info("登录成功")
             if loginType=="3":
                 logger.info("登陆方式: 手机验证码登陆")
@@ -115,7 +118,7 @@ def main():
                     if API.captchaCheck(phone,captcha,ctcode,api):
                         data=API.captchaLogin(phone,captcha,ctcode,api)
                         API.cookieSave(COOKIE_FILE, data['cookie'])
-                        print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId']+"\n登录成功"))
+                        print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId'])+"\n登录成功")
                         logger.info("登录成功")
                         break
                     else:
@@ -138,10 +141,28 @@ def main():
         id_name[i['id']]=i['name']
     print("歌单歌曲数量:"+str(len(songlist)))
 
-    savePath=input("请输入保存路径(默认路径: "+(getcwd()+'/songs/')+"):")
-    savePath=savePath if savePath else (getcwd()+'/songs/')
+    savePath=input("请输入保存路径(默认路径: "+(getcwd()+'/'+PlaylistData['playlist']['name']+'/')+"):")
+    savePath=savePath if savePath else (getcwd()+'/'+PlaylistData['playlist']['name']+'/')
+    savePath=savePath if savePath.endswith('/') or savePath.endswith('\\') else savePath+'/'
     logger.debug("保存路径: "+savePath)
-    makedirs(savePath) if not ospath.exists(savePath) else None
+    
+    if ospath.exists(savePath) and ospath.isdir(savePath):
+        if ospath.exists(savePath+'/PathData.json') and ospath.getsize(savePath+'/PathData.json')>0:
+            with open(savePath+'/PathData.json','r') as f:
+                PathData=jsonload(f)
+        else:
+            PathData={'songs':[]}
+    else:
+        makedirs(savePath)
+        PathData={'songs':[]}
+
+    songlist=list(set(songlist)-set(PathData['songs']))
+    if not songlist:
+        logger.info("歌单中歌曲均已存在")
+        print("歌单中歌曲均已存在")
+        return
+    print("待下载歌曲数量:"+str(len(songlist)))
+
     lyricType=input("是否下载歌词(Y/n):").lower()
     if lyricType != "n":
         lyricType=input("请选择歌词保存方式:\n1:独立文件\n2:歌曲内嵌\n(默认:1):")
@@ -198,6 +219,11 @@ def main():
                 songFile_list.append(API.songFile(savePath+API.to_full_width(id_name[i['id']])+'.'+i['type'],i['id'],i['url'],{"title":songInfo['songs'][songInfo_dict[i['id']]]['name'],"artist":songInfo['songs'][songInfo_dict[i['id']]]['ar'],"album":songInfo['songs'][songInfo_dict[i['id']]]['al']['name'],"picture":songInfo['songs'][songInfo_dict[i['id']]]['al']['picUrl']+"?param=3000y3000"}))
         else:
             break
+
+    with open(savePath+'/PathData.json','w') as f:
+        PathData['changeTime']=strftime('%Y-%m-%d %H:%M:%S', localtime())
+        jsondump(PathData,f)
+
     logger.info("下载完成")
     print("下载完成")
 
