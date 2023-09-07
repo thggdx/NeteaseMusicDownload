@@ -6,6 +6,8 @@ from time import sleep,localtime,strftime
 from getpass import getpass
 from rich.progress import Progress
 from json import load as jsonload,dump as jsondump
+from browser_cookie3 import load as browser_cookie_load
+from webbrowser import open as openweb
 
 DEBUG=False#调试模式开关(!警告!: 开启后日志中可能会记录部分敏感信息!)
 
@@ -71,9 +73,9 @@ def main():
     if not API.cookieSave(COOKIE_FILE):
         logger.info("未登录")
         while True:
-            print("未登录，请选择登陆方式\n1:扫码登陆\n2:手机密码登陆\n3:手机验证码登陆")
+            print("未登录，请选择登陆方式\n1:扫码登陆\n2:手机密码登陆\n3:手机验证码登陆\n4:从浏览器导入cookie")
             loginType=input("请输入登陆方式:")
-            if loginType not in ["1","2","3"]:
+            if loginType not in ["1","2","3","4"]:
                 print("输入错误")
                 continue
             break
@@ -98,6 +100,24 @@ def main():
                     print("登陆成功")
                     logger.info("登陆成功")
                     break
+        elif loginType=="4":
+            logger.info("登陆方式: 从浏览器导入cookie")
+            cookies=browser_cookie_load(domain_name="music.163.com")
+            cookie=""
+            for i in cookies:
+                if i.name=="MUSIC_U":
+                    cookie=i.value
+                    break
+            if cookie:
+                API.cookieSave(COOKIE_FILE, ("MUSIC_U="+cookie))
+                data=API.getAccountInfo(api)
+                print("name: "+data['profile']['nickname']+"\nid: "+str(data['profile']['userId'])+"\n登录成功")
+                logger.info("登录成功")
+            else:
+                print("未登录,请在浏览器中登录后重试")
+                logger.warning("未从浏览器中获取到cookie")
+                openweb('music.163.com/login')
+                exit()
         else:
             ctcode=input("请输入手机号国家代码(默认86):")
             ctcode=ctcode if ctcode else "86"
@@ -143,7 +163,7 @@ def main():
 
     savePath=input("请输入保存路径(默认路径: "+(getcwd()+'/'+PlaylistData['playlist']['name']+'/')+"):")
     savePath=savePath if savePath else (getcwd()+'/'+PlaylistData['playlist']['name']+'/')
-    savePath=savePath if savePath.endswith('/') or savePath.endswith('\\') else savePath+'/'
+    savePath=savePath if savePath.endswith(('/','\\')) else savePath+'/'
     logger.debug("保存路径: "+savePath)
     
     if ospath.exists(savePath) and ospath.isdir(savePath):
@@ -161,6 +181,7 @@ def main():
         logger.info("歌单中歌曲均已存在")
         print("歌单中歌曲均已存在")
         return
+    logger.info("待下载歌曲数量: "+str(len(songlist)))
     print("待下载歌曲数量:"+str(len(songlist)))
 
     lyricType=input("是否下载歌词(Y/n):").lower()
@@ -234,4 +255,4 @@ try:
 except Exception as e:
     logger.exception('An error occurred: %s', e)
     logger.error("程序异常退出")
-    print(str(e))
+    print(str(e)+'\n程序异常退出')

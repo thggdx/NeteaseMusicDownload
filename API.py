@@ -195,6 +195,16 @@ def getSongUrl(songlist:list,api:str) -> dict:
         return data
     else:
         raise Exception("歌曲url获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
+    
+#获取账户信息
+def getAccountInfo(api:str) -> dict:
+    url=api+'/user/account?timestamp='+timestamp()
+    data={'cookie':COOKIE}
+    data=requests.post(url,data=data).json()
+    if(data['code']==200):
+        return data
+    else:
+        raise Exception("账户信息获取模块[Err]:[code]"+str(data['code'])+"[msg]"+data['message'])
 
 #设置歌曲标签
 def setSongTag(filePath:str,songTag:dict) -> bool:
