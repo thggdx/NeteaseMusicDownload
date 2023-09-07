@@ -26,5 +26,6 @@ qrcode
 requests
 mutagen
 rich
+browser_cookie3
 ```
 脚本功能还在完善,欢迎各位大佬指出错误和pr
