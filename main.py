@@ -155,10 +155,8 @@ def main():
         raise Exception("获取歌单信息失败")
     print("歌单: "+PlaylistData['playlist']['name'])
     songlist=[]
-    id_name={}
-    for i in PlaylistData['playlist']['tracks']:
+    for i in PlaylistData['playlist']['trackIds']:
         songlist.append(i['id'])
-        id_name[i['id']]=i['name']
     print("歌单歌曲数量:"+str(len(songlist)))
 
     savePath=input("请输入保存路径(默认路径: "+(getcwd()+'/'+PlaylistData['playlist']['name']+'/')+"):")
@@ -199,7 +197,11 @@ def main():
         logger.error("获取歌曲信息失败")
         raise Exception("获取歌曲信息失败")
 
-    songInfo_dict={j['id']: i for i, j in enumerate(songInfo['songs'])}
+    id_name={}
+    songInfo_dict={}
+    for i,j in enumerate(songInfo['songs']):
+        songInfo_dict[j['id']]=i
+        id_name[j['id']]=j['name']
 
     songUrl=API.getSongUrl(songlist,api)
     if not songUrl:
