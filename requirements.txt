@@ -1,5 +1,5 @@
 browser_cookie3==0.19.1
 mutagen==1.46.0
 qrcode==7.4.2
-Requests==2.31.0
+Requests==2.32.0
 rich==13.5.2
