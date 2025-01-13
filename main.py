@@ -37,7 +37,7 @@ def log_init():
 def task(songFile, semaphore):
     global fail
     try:
-        if songFile.download():
+        if songFile.exists() or songFile.download():
             PathData['songs'].append(songFile.id)
             if lyricType != 'n':
                 lyric = API.getLyric(songFile.id, api)

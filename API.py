@@ -259,6 +259,10 @@ class SongFile:  # TODO
         self.fileName = ospath.splitext(filePath)[0].split('\\')[-1].split('/')[-1]
         self.fileType = ospath.splitext(filePath)[1].lstrip('.').lower()
 
+    def exists(self) -> bool:
+        """检查文件是否存在"""
+        return ospath.exists(self.filePath)
+
     def download(self) -> bool:
         if self.url:
             with open(self.filePath, 'wb') as file:
