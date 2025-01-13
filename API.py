@@ -199,57 +199,6 @@ def getAccountInfo(api: str) -> dict:
         raise Exception('账户信息获取模块[Err]:[code]' + str(data['code']) + '[msg]' + data['message'])
 
 
-# 设置歌曲标签
-def setSongTag(filePath: str, songTag: dict) -> bool:
-    filetype = ospath.splitext(filePath)[1].lower()
-    title = songTag['title']
-    album = songTag['album']
-    arist = []
-    for i in songTag['artist']:
-        arist.append(i['name'])
-    if filetype == '.flac':
-        audiofile = mutagen_flac.FLAC(filePath)
-        audiofile['title'] = title
-        audiofile['artist'] = arist
-        audiofile['album'] = album
-        if ('lyric' in songTag) and (songTag['lyric'] != None):
-            audiofile['lyrics'] = songTag['lyric']
-        if ('picture' in songTag) and (songTag['picture'] != None):
-            response = requests.get(songTag['picture'])
-            picture = mutagen_flac.Picture()
-            picture.type = 3
-            picture.mime = 'image/jpeg'
-            picture.desc = 'Cover'
-            picture.data = response.content
-            audiofile.clear_pictures()
-            audiofile.add_picture(picture)
-    elif filetype == '.mp3':
-        audiofile = mutagen_id3.ID3(filePath)
-        if 'TIT2' in audiofile:
-            audiofile['TIT2'].text = title
-        else:
-            audiofile.add(mutagen_id3.TIT2(encoding=3, text=title))
-        if 'TPE1' in audiofile:
-            audiofile['TPE1'].text = arist
-        else:
-            audiofile.add(mutagen_id3.TPE1(encoding=3, text=arist))
-        if 'TALB' in audiofile:
-            audiofile['TALB'].text = album
-        else:
-            audiofile.add(mutagen_id3.TALB(encoding=3, text=album))
-        if ('lyric' in songTag) and (songTag['lyric'] != None):
-            audiofile['USLT'] = mutagen_id3.USLT(encoding=3, text=songTag['lyric'])
-        if ('picture' in songTag) and (songTag['picture'] != None):
-            response = requests.get(songTag['picture'])
-            picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content)
-            audiofile.delall('APIC')
-            audiofile.add(picture)
-    else:
-        raise Exception('歌曲标签设置模块[Err]:不支持的文件类型')
-    audiofile.save()
-    return True
-
-
 class SongFile:  # TODO
     def __init__(self, filePath: str, id: int = None, url: str = None, songTag: dict = None) -> None:
         self.filePath = filePath
@@ -272,6 +221,54 @@ class SongFile:  # TODO
         return False
 
     def setTag(self) -> bool:
-        if self.songTag:
-            return setSongTag(self.filePath, self.songTag)
-        return False
+        """设置歌曲标签"""
+        if not self.songTag:
+            return False
+
+        filetype = ospath.splitext(self.filePath)[1].lower()
+        title = self.songTag['title']
+        album = self.songTag['album']
+        artists = []
+        for i in self.songTag['artist']:
+            artists.append(i['name'])
+        if filetype == '.flac':
+            audiofile = mutagen_flac.FLAC(self.filePath)
+            audiofile['title'] = title
+            audiofile['artist'] = artists
+            audiofile['album'] = album
+            if ('lyric' in self.songTag) and (self.songTag['lyric'] != None):
+                audiofile['lyrics'] = self.songTag['lyric']
+            if ('picture' in self.songTag) and (self.songTag['picture'] != None):
+                response = requests.get(self.songTag['picture'])
+                picture = mutagen_flac.Picture()
+                picture.type = 3
+                picture.mime = 'image/jpeg'
+                picture.desc = 'Cover'
+                picture.data = response.content
+                audiofile.clear_pictures()
+                audiofile.add_picture(picture)
+        elif filetype == '.mp3':
+            audiofile = mutagen_id3.ID3(self.filePath)
+            if 'TIT2' in audiofile:
+                audiofile['TIT2'].text = title
+            else:
+                audiofile.add(mutagen_id3.TIT2(encoding=3, text=title))
+            if 'TPE1' in audiofile:
+                audiofile['TPE1'].text = artists
+            else:
+                audiofile.add(mutagen_id3.TPE1(encoding=3, text=artists))
+            if 'TALB' in audiofile:
+                audiofile['TALB'].text = album
+            else:
+                audiofile.add(mutagen_id3.TALB(encoding=3, text=album))
+            if ('lyric' in self.songTag) and (self.songTag['lyric'] != None):
+                audiofile['USLT'] = mutagen_id3.USLT(encoding=3, text=self.songTag['lyric'])
+            if ('picture' in self.songTag) and (self.songTag['picture'] != None):
+                response = requests.get(self.songTag['picture'])
+                picture = mutagen_id3.APIC(type=3, mime='image/jpeg', desc='Cover', data=response.content)
+                audiofile.delall('APIC')
+                audiofile.add(picture)
+        else:
+            raise Exception('歌曲标签设置模块[Err]:不支持的文件类型')
+        audiofile.save()
+        return True
