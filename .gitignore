@@ -4,6 +4,7 @@ json/
 songs/
 demo/
 logs/
+venv/
 *demo*
 *.json
 *.mp3
@@ -13,3 +14,4 @@ logs/
 *.lrc
 *.log
 *.pyc
+*喜欢的音乐
